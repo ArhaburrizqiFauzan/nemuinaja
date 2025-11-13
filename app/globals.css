@@ -809,32 +809,41 @@ body.drawer-open .appbar {
   display: flex;
   gap: 16px;
   overflow: hidden;
+  perspective: 1000px;
+  align-items: center;
+  justify-content: center;
 }
 
 .category-card {
   /* Styled as proper card with better appearance */
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: 140px;
   background-color: white;
   border-radius: 12px;
   overflow: hidden;
-  transform: scale(0.85);
-  opacity: 0.5;
-  transition: all 0.3s;
+  transform: scale(0.75) rotateY(25deg) translateZ(-50px);
+  opacity: 0.4;
+  transition: all 0.4s cubic-bezier(0.22,0,0,1);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #f0f0f0;
 }
 
 .category-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .category-card.active {
-  transform: scale(1);
+  transform: scale(1) rotateY(0deg) translateZ(0);
   opacity: 1;
   z-index: 10;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* kartu di sebelah kanan kartu aktif */
+.category-card.active ~ .category-card {
+  transform: scale(0.75) rotateY(-25deg) translateZ(-50px);
+  opacity: 0.4;
 }
 
 .card-image {
