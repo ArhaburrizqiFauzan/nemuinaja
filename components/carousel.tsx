@@ -1,9 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+
+import { useState, useRef } from "react"
 
 export default function Carousel() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  // useRef for touch coordinates to avoid setState async timing issues
+  const touchStartRef = useRef<number | null>(null)
+  const carouselRef = useRef<HTMLDivElement>(null)
 
   const slides = [
     {
@@ -29,9 +34,24 @@ export default function Carousel() {
     setCurrentSlide(index)
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = e.targetTouches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const startX = touchStartRef.current
+    const endX = e.changedTouches[0].clientX
+    touchStartRef.current = null
+    if (startX == null) return
+    const distance = startX - endX
+    const threshold = 50
+    if (distance > threshold) nextSlide()
+    else if (distance < -threshold) prevSlide()
+  }
+
   return (
     <section className="carousel-section">
-      <div className="carousel-container">
+      <div className="carousel-container" ref={carouselRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <button className="carousel-arrow prev" onClick={prevSlide} aria-label="Previous slide">
           ‹
         </button>

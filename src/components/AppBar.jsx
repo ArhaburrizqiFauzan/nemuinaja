@@ -10,7 +10,7 @@ export default function AppBar({ onMenuClick, onSearchClick }) {
         </div>
         <div className="appbar-actions">
           <button className="icon-btn" aria-label="Search" onClick={onSearchClick}>
-            🔍
+            <img src="/search.webp" alt="Search" className="icon-img" />
           </button>
           <button className="icon-btn hamburger" aria-label="Menu" onClick={onMenuClick}>
             ☰

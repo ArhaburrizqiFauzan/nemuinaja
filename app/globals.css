@@ -146,6 +146,11 @@ body {
 body {
   background-color: var(--bg);
   color: var(--ink);
+  transition: overflow 0.3s ease-out;
+}
+
+body.drawer-open {
+  overflow: hidden;
 }
 
 .home-container {
@@ -163,6 +168,12 @@ body {
   margin: 0 auto;
   padding-top: 56px;
   padding-bottom: 32px;
+  transition: filter 0.4s ease-out;
+}
+
+.home-content.blur {
+  filter: blur(5px);
+  pointer-events: none;
 }
 
 /* ===== APPBAR ===== */
@@ -177,6 +188,11 @@ body {
   height: 56px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition: opacity 0.32s ease-out, transform 0.32s ease-out;
+  /* default is slightly above so slide-in feels natural */
+  transform: translateY(-4px);
 }
 
 .appbar-container {
@@ -186,7 +202,6 @@ body {
   padding: 0 16px;
   width: 100%;
   max-width: 390px;
-  margin: 0 auto;
 }
 
 .logo {
@@ -195,6 +210,33 @@ body {
   gap: 8px;
   font-weight: 600;
   font-size: 16px;
+  /* Logo positioned more to the left and less padding */
+  margin-left: -4px;
+  transition: opacity 0.3s ease-out;
+}
+
+.logo.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* when a drawer is open and the AppBar should be behind, reduce opacity of elements
+   (logo/icons already handle hiding). When drawer is closing (still mounted but
+   parent requested close), promote the AppBar and animate it in front of the drawer */
+body.drawer-closing .appbar {
+  z-index: 102; /* above drawer (drawer z-index: 101) */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* when drawer is fully open, keep AppBar slightly hidden to emphasize drawer
+   (logo and icons are individually faded). This keeps the bar visually behind */
+body.drawer-open .appbar {
+  z-index: 100;
+}
+
+.nemuinaja-text {
+  font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .logo-icon {
@@ -203,21 +245,28 @@ body {
 
 .appbar-actions {
   display: flex;
-  gap: 12px;
+  gap: 4px;
+  /* Move icons more to the right and compress spacing */
+  margin-right: -8px;
 }
 
-.icon-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s;
-}
+  .icon-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease-out;
+  }
+
+  .icon-btn.active {
+    opacity: 0;
+    pointer-events: none;
+  }
 
 .icon-btn:hover {
   opacity: 0.7;
@@ -235,32 +284,81 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 99;
+  animation: fadeInBlur 0.4s ease-out;
+}
+
+@keyframes fadeInBlur {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
 
 .drawer-menu,
 .drawer-search {
   position: fixed;
-  top: 0;
+  top: 0; /* overlap the navbar */
+  left: 0;
   right: 0;
-  bottom: 0;
   background-color: var(--dark-surface);
   color: white;
-  width: 280px;
+  width: 100%;
+  max-width: 100%;
   z-index: 101;
   overflow-y: auto;
   padding: 16px;
-  animation: slideIn 0.3s ease-out;
+  animation: slideDownDrawer 0.4s ease-out forwards;
+  max-height: 100vh;
 }
 
-@keyframes slideIn {
+.drawer-menu.closing,
+.drawer-search.closing {
+  /* start sliding up immediately and take slightly longer for a smoother feel
+     use a non-overshooting easing (no bounce) */
+  animation: slideUpDrawer 0.52s cubic-bezier(0.22, 0.0, 0.0, 1.0) forwards;
+  animation-delay: 0s;
+}
+
+@keyframes slideUpDrawer {
   from {
-    transform: translateX(100%);
+    transform: translateY(0);
+    opacity: 1;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(-100%);
+    opacity: 0;
   }
+}
+
+@keyframes slideDownDrawer {
+  from {
+    transform: translateY(-100%);
+    /* start semi-transparent so it fades in to full */
+    opacity: 0.48;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.drawer-overlay.active {
+  opacity: 1;
+}
+
+.drawer-menu.active,
+.drawer-search.active {
+  transform: translateY(0);
 }
 
 .drawer-close {
@@ -273,6 +371,30 @@ body {
   font-size: 24px;
   cursor: pointer;
   padding: 8px;
+  z-index: 1;
+  transition: opacity 0.2s;
+}
+
+.drawer-close:hover {
+  opacity: 0.7;
+}
+
+/* inner content fade/slide when closing: align durations with drawer slide so content remains visible while the drawer moves */
+.drawer-inner {
+  transition: transform 0.52s cubic-bezier(0.22, 0.0, 0.0, 1.0), opacity 0.52s cubic-bezier(0.22, 0.0, 0.0, 1.0);
+}
+
+/* when closing, slightly lift and fade the inner content together with the drawer slide */
+.drawer-inner.content-closing {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* ensure child also responds if parent gets closing class (keeps visual cohesion) */
+.drawer-menu.closing .drawer-inner,
+.drawer-search.closing .drawer-inner {
+  opacity: 0;
+  transform: translateY(-12px);
 }
 
 .drawer-close:focus {
@@ -283,8 +405,10 @@ body {
 .drawer-header {
   display: flex;
   gap: 12px;
-  margin-top: 40px;
-  margin-bottom: 16px;
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-icon {
@@ -309,6 +433,7 @@ body {
   font-size: 14px;
   margin-bottom: 4px;
   opacity: 0.9;
+  font-weight: 500;
 }
 
 .user-name {
@@ -327,6 +452,7 @@ body {
   padding: 0;
   text-decoration: none;
   transition: opacity 0.2s;
+  display: inline;
 }
 
 .user-link:hover {
@@ -336,30 +462,31 @@ body {
 .link-separator {
   margin: 0 4px;
   opacity: 0.5;
+  color: white;
 }
 
 .drawer-divider {
-  border: none;
-  height: 1px;
-  background-color: rgba(255, 255, 255, 0.1);
-  margin: 16px 0;
+  display: none;
 }
 
 .menu-list {
   list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .menu-list li {
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .menu-list a {
   color: white;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
   display: block;
-  padding: 8px 0;
+  padding: 12px 0;
   transition: color 0.2s;
+  font-weight: 400;
 }
 
 .menu-list a:hover {
@@ -376,21 +503,64 @@ body {
   margin-top: 40px;
 }
 
-.search-title {
-  font-size: 20px;
-  margin-bottom: 16px;
-  font-weight: 600;
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  margin-top: 16px;
 }
 
-.search-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.1);
+.search-toggle {
+  background: none;
+  border: none;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  font-size: 14px;
-  margin-bottom: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* search title and inline input both in the header */
+.search-title {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 600;
+  transition: opacity 0.28s ease-out;
+}
+
+.search-title.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.search-input-inline {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  padding: 0;
+  flex: 1;
+  outline: none;
+  transition: opacity 0.28s ease-out;
+  max-width: 0;
+  overflow: hidden;
+}
+
+.search-input-inline::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-input-inline.visible {
+  max-width: none;
+  opacity: 1;
+}
+
+.search-input-inline.hidden {
+  max-width: 0;
+  opacity: 0;
 }
 
 .search-input::placeholder {
@@ -416,24 +586,33 @@ body {
 }
 
 .chip {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   padding: 8px 12px;
   border-radius: 20px;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.24s cubic-bezier(0.22,0,0,1);
+  font-weight: 400;
 }
 
 .chip:hover {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  color: var(--ink);
+  background-color: #5AC4B5;
+  border-color: #5AC4B5;
+  color: #FAFAFA;
+}
+
+.chip:active {
+  background-color: #5AC4B5;
+  border-color: #5AC4B5;
+  color: #FAFAFA;
+  font-weight: 700;
 }
 
 .chip:focus {
-  outline: 2px solid white;
+  outline: 2px solid #5AC4B5;
+  outline-offset: 2px;
 }
 
 /* ===== HERO ===== */
@@ -474,13 +653,16 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--accent);
-  color: var(--ink);
+  background-color: #5AC4B5;
+  color: #FAFAFA;
+  border: 1px solid transparent;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
+  background-color: #FAFAFA;
+  color: var(--ink);
+  border: 1px solid #5AC4B5;
+  transform: translateY(0);
 }
 
 .btn-primary:focus {
@@ -489,12 +671,28 @@ body {
 }
 
 .btn-accent {
-  background-color: var(--accent);
-  color: var(--ink);
+  background-color: #5AC4B5;
+  color: #FAFAFA;
+  border: 1px solid transparent;
 }
 
 .btn-accent:hover {
-  opacity: 0.9;
+  background-color: #FAFAFA;
+  color: var(--ink);
+  border: 1px solid #5AC4B5;
+  transform: translateY(0);
+}
+
+.btn-accent:active {
+  background-color: #5AC4B5;
+  color: #FAFAFA;
+  border: 1px solid #5AC4B5;
+  font-weight: 700;
+}
+
+.btn-accent:focus {
+  outline: 2px solid #5AC4B5;
+  outline-offset: 2px;
 }
 
 .btn-arrow {
@@ -526,6 +724,9 @@ body {
   padding: 16px;
   font-size: 13px;
   color: var(--text-light);
+  /* Added touch interaction support */
+  touch-action: pan-y;
+  user-select: none;
 }
 
 .slide-placeholder {
@@ -611,21 +812,29 @@ body {
 }
 
 .category-card {
+  /* Styled as proper card with better appearance */
   flex: 1;
   min-width: 0;
-  background-color: var(--card);
-  border-radius: 8px;
+  background-color: white;
+  border-radius: 12px;
   overflow: hidden;
-  transform: skewX(-10deg) scale(0.85);
+  transform: scale(0.85);
   opacity: 0.5;
   transition: all 0.3s;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+}
+
+.category-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .category-card.active {
-  transform: skewX(0) scale(1);
+  transform: scale(1);
   opacity: 1;
   z-index: 10;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .card-image {
@@ -782,7 +991,8 @@ body {
   background-color: var(--dark-surface);
   color: white;
   padding: 24px 16px;
-  text-align: center;
+  /* Align footer content to left instead of center */
+  text-align: left;
 }
 
 .footer-content {
@@ -797,22 +1007,22 @@ body {
 
 .social-icons {
   display: flex;
-  justify-content: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .social-icons a {
+  /* Updated to rounded square frame instead of circle */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
   text-decoration: none;
   transition: all 0.2s;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .social-icons a:hover {

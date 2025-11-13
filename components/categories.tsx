@@ -19,10 +19,22 @@ export default function Categories() {
     setCurrentCategory((prev) => (prev - 1 + categories.length) % categories.length)
   }
 
+  const handleCardClick = (index: number) => {
+    setCurrentCategory(index)
+  }
+
   return (
     <section className="categories-section">
       <h2 className="section-title">
-        Jelajahi kategori <span className="accent">populer</span>
+        Jelajahi UMKM <br></br>
+        <span
+          style={{
+            background: 'linear-gradient(90deg, #5AC4B5 4%, #303030 83%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        >populer</span>
       </h2>
 
       <div className="categories-carousel">
@@ -32,7 +44,19 @@ export default function Categories() {
 
         <div className="categories-track">
           {categories.map((cat, idx) => (
-            <div key={cat.id} className={`category-card ${idx === currentCategory ? "active" : ""}`}>
+            <div
+              key={cat.id}
+              className={`category-card ${idx === currentCategory ? "active" : ""}`}
+              onClick={() => handleCardClick(idx)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleCardClick(idx)
+                }
+              }}
+              aria-pressed={idx === currentCategory}
+            >
               <div className="card-image" />
               <div className="card-info">
                 <h3>{cat.name}</h3>
